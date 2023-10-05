@@ -15,28 +15,27 @@ This website provides some additional experimental results for the paper __Who's
 ## Evaluation on Ground Vehicle
 
 **Evaluation Setup**
-We conducted the Butterfly attack on a ground vehicle powered by [ArduRover]{https://ardupilot.org/rover/} control software, wherein all controls operate on a single System-on-Chip (SoC). ArduRover is a part of the ArduPilot project and is specifically designed to control ground-based vehicles. The computing platform is Navio2, a board built on top of the Raspberry Pi 3b, complete with sensors and external peripherals such as radio control. To emulate the message delays necessary to execute the Butterfly Attack, we intentionally jammed three out of every four GPS messages. The software version is the same as the prvious evaluation - *Ardupilot Drone*.
-
+We conducted the Butterfly attack on a ground vehicle powered by [ArduRover](https://ardupilot.org/rover/) 4.0 control software, wherein all controls operate on a single System-on-Chip (SoC). ArduRover is a part of the ArduPilot project and is specifically designed to control ground-based vehicles. The computing platform is Navio2, a board built on top of the Raspberry Pi 3b, complete with sensors and external peripherals such as radio control. To emulate the message delays necessary to execute the Butterfly Attack, we intentionally jammed three out of every four GPS messages.
 **Evaluation Result**
 
 The line in the figure is downsampled by 50, and the marker is downsampled by 200 to enhance the visualization. 
 
 - Main Task Release Intervals
 
-The figure reports the task release interval of the main loop task in ArduRover `loop()`.
-The average task interval under normal conditions is 2.574ms, while under attack conditions, it is slightly higher at 2.594ms. However, the difference is not significant. This is primarily due to the fact that in ArduRover, the variability in workload caused by skipped GPS messages is minimal.
+
+The subsequent figure displays the task release intervals for the main control loop operating at 50Hz and influenced by GPS jamming. Although the anticipated interval is 20ms, the observed average stands at 19.99ms. The variances under attack and non-attack conditions are 0.0019ms and 0.0011ms, respectively. The negligible difference can be attributed to the insignificant workload triggered by the GPS signal.
 
 <center><img src="rover_results/rover_task_jitters.png" alt="Control Errors" width="600"/></center>
 
-- Control Task Intervals
+- Control Output Intervals
 
-To showcase that the control jitters maintain relative stability, we conducted measurements on the release interval of the task, which is responsible for sending control output to the co-processor managing the PMW signal for actuation. From the figure, we can observe that the jitters in the task that handles control messages are much more stable. This is mainly because it is also prioritized over other tasks, and thus is less impacted by the execution of other tasks.
+Another task manages the control output at 400Hz. To assess its sensitivity to jitters originating from the main loop task, we manually injected 1ms of jitters into the main loop task and studied its influence on the control output task. The results reveal average intervals of 2.49ms during the attack and 2.48ms without, indicating negligible differences.
 
 <center><img src="rover_results/rover_control_jitters.png" alt="Control Errors" width="600"/></center>
 
 - Actual Control Error 
 
-The control errors are measured by the different between target acceleration and the current acceleration in each loop. The figure below shows that, in both scenarios - with and without an attack - the error remains below 0.02 m/s².
+we injected an additional 2ms of jitter into the control output to assess its potential negative impact on control performance. Our findings show that the consequences are negligible: the average control error in lateral acceleration, both under attack and normal conditions, is 0.003 m/s², with only a 0.4% increase in control errors.
 
 <center><img src="rover_results/rover_control_error.png" alt="Control Errors" width="600"/></center>
 
@@ -50,23 +49,25 @@ The experiments were conducted using an actual drone equipped with Ardupilot 4.0
 
 - Task Release Intervals. 
 
-Figure 5(a) in the sumbitted paper is too dense to to show the actual values. For clearer visualization, the line in the figure is downsampled by 50, and the marker is downsampled by 200.
-Although there are some abnormal timings, the average interval is in the nominal conditions 2.611 and 2.543 under attack. The average variance is 0.878ms and more than 87.0% of the task release intervals are within this threshold. While it is under attack, 89.2% are within 0.953ms. Besides, as evident from the figure, the attack doesn't cause a noticeable increase in jitters compared to those under normal conditions.
+For better visualization, the plotted lines in figures below are downsampled by 100, and the marker is downsampled by 400.
 
 
-<center><img src="ardupilot_results/task_jitters.png" alt="Main Loop Interval" width="600"/></center>
+The following plots the task release time for `update_GPS`. Under nominal conditions, the average interval is 2.507ms and 99.9% of the intervals lie within one variance 0.43ms. Under attack conditions, the average interval is 2.508ms and 99.9% of the intervals are also within one variance 0.43ms. This indicates no discernible difference between the attack and normal conditions.
+
+
+<center><img src="ardupilot_results/drone_task_jitters.png" alt="Main Loop Interval" width="600"/></center>
 
 - Control Output Intervals
 
-We also show that the run_nav_update task's execution jitters have a minimal effect on the control output jitters. The figure below shows the jitter of the task that relays the control command to the co-processor. Notably, it exhibits significantly less jitter compared to previous tasks. This is largely attributable to the actuation command task being the first to execute in the main control loop.
+The intervals of outputting control commands are depicted as follows. Under normal conditions, the average interval is 2.505ms with a variance of 0.45ms, and 99.95% of the intervals fall within one variance. In the attack scenario, the average interval is 2.51ms with a variance of 0.47ms, and 99.95% of the intervals also fall within one variance. There is no discernible difference in the jitters between the attack and non-attack scenarios either.
 
 
-<center><img src="ardupilot_results/control_jitters.png" alt="Control Output Interval" width="600"/></center>
+<center><img src="ardupilot_results/drone_control_jitters.png" alt="Control Output Interval" width="600"/></center>
 
 
 - Control Errors
 
-We further present the quantitative results of control errors to demonstrate that the attack outcomes caused by the Butterfly Attack are limited. We measure control errors by calculating the discrepancy between the desired and actual velocities. In two experiment sets, the control errors consistently stayed beneath the (0.03m/s) threshold, a range deemed acceptable for drone operations. Additionally, there are no substantial disparities between the two curves representing the control errors.
+Increasing the jitters to a level that leads to significant degradation is challenging, as the control software is designed to be resilient to timing variations to a certain extent.  To explore this, we manually injected a 2ms jitter into the control output and recorded the control error in the velocity controller to gauge control performance. In both attack and non-attack scenarios, the control errors remain below the threshold of 0.03m/s, which is considered acceptable for drones compared to errors under normal conditions.
 
 
-<center><img src="ardupilot_results/control_error.png" alt="Control Errors" width="600"/></center>
+<center><img src="ardupilot_results/drone_control_error.png" alt="Control Errors" width="600"/></center>
